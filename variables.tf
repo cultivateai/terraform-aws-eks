@@ -94,6 +94,10 @@ variable "worker_groups" {
   ]
 }
 
+variable "workers_ami" {
+  type = "string"
+}
+
 variable "worker_group_count" {
   description = "The number of maps contained within the worker_groups list."
   type        = "string"

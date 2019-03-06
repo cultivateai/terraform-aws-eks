@@ -69,7 +69,7 @@ resource "aws_launch_template" "workers_launch_template" {
     name = "${element(aws_iam_instance_profile.workers_launch_template.*.name, count.index)}"
   }
 
-  image_id      = "${lookup(var.worker_groups_launch_template[count.index], "ami_id", local.workers_group_launch_template_defaults["ami_id"])}"
+  image_id      = "${lookup(var.worker_groups_launch_template[count.index], "ami_id", var.workers_ami)}"
   instance_type = "${lookup(var.worker_groups_launch_template[count.index], "instance_type", local.workers_group_launch_template_defaults["instance_type"])}"
   key_name      = "${lookup(var.worker_groups_launch_template[count.index], "key_name", local.workers_group_launch_template_defaults["key_name"])}"
   user_data     = "${base64encode(element(data.template_file.launch_template_userdata.*.rendered, count.index))}"
