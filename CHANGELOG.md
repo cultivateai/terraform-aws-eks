@@ -7,7 +7,7 @@ project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Next release
 
-## [[v2.3.0?](https://github.com/terraform-aws-modules/terraform-aws-eks/compare/v2.2.0...HEAD)] - 2019-03-??]
+## [[v3.?.?](https://github.com/terraform-aws-modules/terraform-aws-eks/compare/v3.0.0...HEAD)] - 2019-05-??]
 
 ### Added
 
@@ -15,16 +15,58 @@ project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+ - Add .prettierignore file (by @rothandrew)
+ - Switch to https for the pre-commit repos (by @rothandrew)
+ - Add instructions on how to enable the docker bridge network (by @rothandrew)
  - Write your awesome change here (by @you)
 
 # History
 
-## [[v2.2.1](https://github.com/terraform-aws-modules/terraform-aws-eks/compare/v2.2.0...v2.2.1)] - 2019-02-18]
+## [[v3.0.0](https://github.com/terraform-aws-modules/terraform-aws-eks/compare/v2.3.1...v3.0.0)] - 2019-04-15]
 
 ### Added
 
+- Fixed: Ability to destroy clusters due to security groups being attached to ENI's (by @whiskeyjimbo)
+- Added outputs for worker IAM instance profile(s) (by @soapergem)
+- Added support for cluster logging via the `cluster_enabled_log_types` variable (by @sc250024)
+
+### Changed
+
+ - Updated vpc module version and aws provider version. (by @chenrui333)
+ - Upgraded default kubernetes version from 1.11 to 1.12 (by @stijndehaes)
+
+## [[v2.3.1](https://github.com/terraform-aws-modules/terraform-aws-eks/compare/v2.3.0...v2.3.1)] - 2019-03-26]
+
+### Added
+
+- Added support for eks public and private endpoints (by @stijndehaes)
+- Added minimum inbound traffic rule to the cluster worker security group as per the [EKS security group requirements](https://docs.aws.amazon.com/eks/latest/userguide/sec-group-reqs.html) (by @sc250024)
+
+### Changed
+
+- (Breaking Change) Replaced `enable_docker_bridge` with a generic option called `bootstrap_extra_args` to resolve [310](https://github.com/terraform-aws-modules/terraform-aws-eks/issues/310) (by @max-rocket-internet)
+
+## [[v2.3.0](https://github.com/terraform-aws-modules/terraform-aws-eks/compare/v2.2.1...v2.3.0)] - 2019-03-20]
+
+### Added
+
+- Allow additional policies to be attached to worker nodes (by @rottenbytes)
+- Ability to specify a placement group for each worker group (by @matheuss)
+- "k8s.io/cluster-autoscaler/{cluster-name}" and "k8s.io/cluster-autoscaler/node-template/resources/ephemeral-storage" tags for autoscaling groups (by @tbarrella)
+- Added "ec2:DescribeLaunchTemplateVersions" action to worker instance role (by @skang0601)
+- Adding ebs encryption for workers launched using workers_launch_template (by @russki)
 - Added output for generated kubeconfig filename (by @syst0m)
 - Added outputs for cluster role ARN and name (by @spingel)
+- Added optional name filter variable to be able to pin worker AMI to a release (by @max-rocket-internet)
+- Added `--enable-docker-bridge` option for bootstrap.sh in AMI (by @michaelmccord)
+
+## [[v2.2.2](https://github.com/terraform-aws-modules/terraform-aws-eks/compare/v2.2.1...v2.2.2)] - 2019-02-25]
+
+### Added
+
+- Ability to specify a path for IAM roles (by @tekn0ir)
+
+## [[v2.2.1](https://github.com/terraform-aws-modules/terraform-aws-eks/compare/v2.2.0...v2.2.1)] - 2019-02-18]
 
 ## [[v2.2.0](https://github.com/terraform-aws-modules/terraform-aws-eks/compare/v2.1.0...v2.2.0)] - 2019-02-07]
 

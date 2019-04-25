@@ -24,6 +24,7 @@ locals {
     root_iops                     = "0"                             # The amount of provisioned IOPS. This must be set with a volume_type of "io1".
     key_name                      = ""                              # The key name that should be used for the instances in the autoscaling group
     pre_userdata                  = ""                              # userdata to pre-append to the default userdata.
+    bootstrap_extra_args          = ""                              # Extra arguments passed to the bootstrap.sh script from the EKS AMI.
     additional_userdata           = ""                              # userdata to append to the default userdata.
     ebs_optimized                 = true                            # sets whether to use ebs optimization on supported types.
     enable_monitoring             = true                            # Enables/disables detailed monitoring.
@@ -37,6 +38,7 @@ locals {
     suspended_processes           = ""                              # A comma delimited string of processes to to suspend. i.e. AZRebalance,HealthCheck,ReplaceUnhealthy
     target_group_arns             = ""                              # A comma delimited list of ALB target group ARNs to be associated to the ASG
     enabled_metrics               = ""                              # A comma delimited list of metrics to be collected i.e. GroupMinSize,GroupMaxSize,GroupDesiredCapacity
+    placement_group               = ""                              # The name of the placement group into which to launch the instances, if any.
   }
 
   workers_group_defaults = "${merge(local.workers_group_defaults_defaults, var.workers_group_defaults)}"
@@ -62,12 +64,16 @@ locals {
     root_volume_size                         = "100"                                         # root volume size of workers instances.
     root_volume_type                         = "gp2"                                         # root volume type of workers instances, can be 'standard', 'gp2', or 'io1'
     root_iops                                = "0"                                           # The amount of provisioned IOPS. This must be set with a volume_type of "io1".
+    root_encrypted                           = false                                         # root volume encryption for workers.
+    kms_key_id                               = ""                                            # KMS key ID used for encrypted block device. ASG must have access to this key. If not specified, the default KMS key will be used.
     key_name                                 = ""                                            # The key name that should be used for the instances in the autoscaling group
     pre_userdata                             = ""                                            # userdata to pre-append to the default userdata.
+    bootstrap_extra_args                     = ""                                            # Extra arguments passed to the bootstrap.sh script from the EKS AMI.
     additional_userdata                      = ""                                            # userdata to append to the default userdata.
     ebs_optimized                            = true                                          # sets whether to use ebs optimization on supported types.
     enable_monitoring                        = true                                          # Enables/disables detailed monitoring.
     public_ip                                = false                                         # Associate a public ip address with a worker
+    eni_delete                               = true                                          # Delete the ENI on termination (if set to false you will have to manually delete before destroying)
     kubelet_extra_args                       = ""                                            # This string is passed directly to kubelet if set. Useful for adding labels or taints.
     subnets                                  = "${join(",", var.subnets)}"                   # A comma delimited string of subnets to place the worker nodes in. i.e. subnet-123,subnet-456,subnet-789
     autoscaling_enabled                      = false                                         # Sets whether policy and matching tags will be added to allow autoscaling.
@@ -77,6 +83,7 @@ locals {
     suspended_processes                      = ""                                            # A comma delimited string of processes to to suspend. i.e. AZRebalance,HealthCheck,ReplaceUnhealthy
     target_group_arns                        = ""                                            # A comma delimited list of ALB target group ARNs to be associated to the ASG
     enabled_metrics                          = ""                                            # A comma delimited list of metrics to be collected i.e. GroupMinSize,GroupMaxSize,GroupDesiredCapacity
+    placement_group                          = ""                                            # The name of the placement group into which to launch the instances, if any.
   }
 
   workers_group_launch_template_defaults = "${merge(local.workers_group_launch_template_defaults_defaults, var.workers_group_launch_template_defaults)}"

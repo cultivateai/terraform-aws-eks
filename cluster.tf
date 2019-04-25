@@ -1,11 +1,14 @@
 resource "aws_eks_cluster" "this" {
-  name     = "${var.cluster_name}"
-  role_arn = "${aws_iam_role.cluster.arn}"
-  version  = "${var.cluster_version}"
+  name                      = "${var.cluster_name}"
+  enabled_cluster_log_types = "${var.cluster_enabled_log_types}"
+  role_arn                  = "${aws_iam_role.cluster.arn}"
+  version                   = "${var.cluster_version}"
 
   vpc_config {
-    security_group_ids = ["${local.cluster_security_group_id}"]
-    subnet_ids         = ["${var.subnets}"]
+    security_group_ids      = ["${local.cluster_security_group_id}"]
+    subnet_ids              = ["${var.subnets}"]
+    endpoint_private_access = "${var.cluster_endpoint_private_access}"
+    endpoint_public_access  = "${var.cluster_endpoint_public_access}"
   }
 
   timeouts {
@@ -53,6 +56,7 @@ resource "aws_iam_role" "cluster" {
   name_prefix           = "${var.cluster_name}"
   assume_role_policy    = "${data.aws_iam_policy_document.cluster_assume_role_policy.json}"
   permissions_boundary  = "${var.permissions_boundary}"
+  path                  = "${var.iam_path}"
   force_detach_policies = true
 }
 
