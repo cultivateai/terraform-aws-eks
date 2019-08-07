@@ -7,19 +7,64 @@ project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Next release
 
-## [[v4.?.?](https://github.com/terraform-aws-modules/terraform-aws-eks/compare/v4.0.0...HEAD)] - 2019-06-??]
+## [[v5.?.?](https://github.com/terraform-aws-modules/terraform-aws-eks/compare/v5.1.0...HEAD)] - 2019-08-??]
 
 ### Added
 
-- Update EBS optimized instances type (by @gloutsch)
+ - Added `market_type` to `workers_launch_template.tf` allow the usage of spot nodegroups without mixed instances policy.
+ - Added support for log group tag in `./cluster.tf` (@lucas-giaco)
+ - Added support for workers iam role tag in `./workers.tf` (@lucas-giaco)
+ - Write your awesome addition here (by @you)
+ - Added `required_providers` to enforce provider minimum versions (by @dpiddockcmp)
 
 ### Changed
 
-- Fix toggle for IAM instance profile creation for mixed launch templates (by @jnozo)
+ - Fixed errors sometimes happening during destroy due to usage of coalesce() in local.tf (by @petrikero)
+ - Write your awesome change here (by @you)
 
 # History
 
-## [[v4.0.2](https://github.com/terraform-aws-modules/terraform-aws-eks/compare/v4.0.0...v4.0.1)] - 2019-05-07]
+## [[v5.1.1](https://github.com/terraform-aws-modules/terraform-aws-eks/compare/v5.1.0...v5.1.1)] - 2019-07-30]
+
+### Added
+
+ - Added new tag in `worker.tf` with autoscaling_enabled = true flag (by @insider89)
+
+## [[v5.1.0](https://github.com/terraform-aws-modules/terraform-aws-eks/compare/v5.0.0...v5.1.0)] - 2019-07-30]
+
+### Added
+
+ - Option to set a KMS key for the log group and encrypt it (by @till-krauss)
+ - Output the name of the cloudwatch log group (by @gbooth27)
+ - Added `cpu_credits` param for the workers defined in `worker_groups_launch_template` (by @a-shink)
+ - Added support for EBS Volumes tag in `worker_groups_launch_template` and `workers_launch_template_mixed.tf` (by @sppwf)
+ - Basic example now tags networks correctly, as per [ELB documentation](https://docs.aws.amazon.com/eks/latest/userguide/load-balancing.html) and [ALB documentation](https://docs.aws.amazon.com/eks/latest/userguide/alb-ingress.html) (by @karolinepauls)
+
+### Changed
+
+ - Update default override instance types to work with Cluster Autoscaler (by @nauxliu on behalf of RightCapital)
+ - Examples now specify `enable_dns_hostnames = true`, as per [EKS documentation](https://docs.aws.amazon.com/eks/latest/userguide/network_reqs.html) (by @karolinepauls)
+
+## [[v5.0.0](https://github.com/terraform-aws-modules/terraform-aws-eks/compare/v4.0.2...v5.0.0)] - 2019-06-19]
+
+### Added
+
+- Added Termination Policy Option to worker ASGs (by @undeadops)
+- Update EBS optimized instances type (by @gloutsch)
+- Added tagging for iam role created in `./cluster.tf` (@camilosantana)
+- Enable log retention for cloudwatch log groups (by @yuriipolishchuk)
+- Update to EKS 1.13 (by @gloutsch)
+
+### Changed
+
+- Finally, Terraform 0.12 support, [Upgrade Guide](https://github.com/terraform-aws-modules/terraform-aws-eks/pull/394) (by @alex-goncharov @nauxliu @timboven)
+- All the xx_count variables have been removed (by @nauxliu on behalf of RightCapital)
+- Use actual lists in the workers group maps instead of strings with commas (by @nauxliu on behalf of RightCapital)
+- Move variable `worker_group_tags` to workers group's attribute `tags` (by @nauxliu on behalf of RightCapital)
+- Change override instance_types to list (by @nauxliu on behalf of RightCapital)
+- Fix toggle for IAM instance profile creation for mixed launch templates (by @jnozo)
+
+## [[v4.0.2](https://github.com/terraform-aws-modules/terraform-aws-eks/compare/v4.0.1...v4.0.2)] - 2019-05-07]
 
 ### Changed
 
