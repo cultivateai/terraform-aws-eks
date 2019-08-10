@@ -122,7 +122,7 @@ resource "aws_autoscaling_group" "workers" {
 
 resource "aws_launch_configuration" "workers" {
   count       = local.worker_group_count
-  image_id    =  "${lookup(var.worker_groups[count.index], "ami_id", var.workers_ami)}"
+  image_id    = "${lookup(var.worker_groups[count.index], "ami_id", var.workers_ami)}"
   name_prefix = "${aws_eks_cluster.this.name}-${lookup(var.worker_groups[count.index], "name", count.index)}"
   associate_public_ip_address = lookup(
     var.worker_groups[count.index],
@@ -142,11 +142,6 @@ resource "aws_launch_configuration" "workers" {
     aws_iam_instance_profile.workers.*.id,
     data.aws_iam_instance_profile.custom_worker_group_iam_instance_profile.*.name,
   )[count.index]
-  image_id = lookup(
-    var.worker_groups[count.index],
-    "ami_id",
-    local.workers_group_defaults["ami_id"],
-  )
   instance_type = lookup(
     var.worker_groups[count.index],
     "instance_type",
