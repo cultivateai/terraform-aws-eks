@@ -35,21 +35,6 @@ EOS
 data "aws_caller_identity" "current" {
 }
 
-data "template_file" "launch_template_mixed_worker_role_arns" {
-  count    = local.worker_group_launch_template_mixed_count
-  template = file("${path.module}/templates/worker-role.tpl")
-
-  vars = {
-    worker_role_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${element(
-      coalescelist(
-        aws_iam_instance_profile.workers_launch_template_mixed.*.role,
-        data.aws_iam_instance_profile.custom_worker_group_launch_template_mixed_iam_instance_profile.*.role_name,
-      ),
-      count.index,
-    )}"
-  }
-}
-
 data "template_file" "launch_template_worker_role_arns" {
   count    = local.worker_group_launch_template_count
   template = file("${path.module}/templates/worker-role.tpl")
@@ -62,6 +47,11 @@ data "template_file" "launch_template_worker_role_arns" {
       ),
       count.index,
     )}"
+    platform = lookup(
+      var.worker_groups_launch_template[count.index],
+      "platform",
+      local.workers_group_defaults["platform"]
+    )
   }
 }
 
@@ -78,6 +68,11 @@ data "template_file" "worker_role_arns" {
       ),
       count.index,
     )}"
+    platform = lookup(
+      var.worker_groups[count.index],
+      "platform",
+      local.workers_group_defaults["platform"]
+    )
   }
 }
 
@@ -91,50 +86,11 @@ data "template_file" "config_map_aws_auth" {
         concat(
           data.template_file.launch_template_worker_role_arns.*.rendered,
           data.template_file.worker_role_arns.*.rendered,
-          data.template_file.launch_template_mixed_worker_role_arns.*.rendered,
         ),
       ),
     )
-    map_users    = join("", data.template_file.map_users.*.rendered)
-    map_roles    = join("", data.template_file.map_roles.*.rendered)
-    map_accounts = join("", data.template_file.map_accounts.*.rendered)
+    map_users    = yamlencode(var.map_users),
+    map_roles    = yamlencode(var.map_roles),
+    map_accounts = yamlencode(var.map_accounts)
   }
 }
-
-data "template_file" "map_users" {
-  count = length(var.map_users)
-  template = file(
-    "${path.module}/templates/config-map-aws-auth-map_users.yaml.tpl",
-  )
-
-  vars = {
-    user_arn = var.map_users[count.index]["user_arn"]
-    username = var.map_users[count.index]["username"]
-    group    = var.map_users[count.index]["group"]
-  }
-}
-
-data "template_file" "map_roles" {
-  count = length(var.map_roles)
-  template = file(
-    "${path.module}/templates/config-map-aws-auth-map_roles.yaml.tpl",
-  )
-
-  vars = {
-    role_arn = var.map_roles[count.index]["role_arn"]
-    username = var.map_roles[count.index]["username"]
-    group    = var.map_roles[count.index]["group"]
-  }
-}
-
-data "template_file" "map_accounts" {
-  count = length(var.map_accounts)
-  template = file(
-    "${path.module}/templates/config-map-aws-auth-map_accounts.yaml.tpl",
-  )
-
-  vars = {
-    account_number = var.map_accounts[count.index]
-  }
-}
-

@@ -7,22 +7,80 @@ project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Next release
 
-## [[v5.?.?](https://github.com/terraform-aws-modules/terraform-aws-eks/compare/v5.1.0...HEAD)] - 2019-08-??]
+## [[v7.?.?](https://github.com/terraform-aws-modules/terraform-aws-eks/compare/v6.1.0...HEAD)] - 2019-??-??]
 
 ### Added
+
+- Test against minimum versions specified in `versions.tf` (by @dpiddockcmp)
+
+### Changed
+
+- Updated instance_profile_names and instance_profile_arns outputs to also consider launch template as well as asg (by @ankitwal)
+
+# History
+
+## [[v7.0.0](https://github.com/terraform-aws-modules/terraform-aws-eks/compare/v6.0.2...v7.0.0)] - 2019-10-30]
+
+### Added
+
+- **Breaking:** Allow for specifying a custom AMI for the worker nodes. (by @bmcstdio)
+- Added support for Windows workers AMIs (by @hodduc)
+- Allow for replacing the full userdata text with a `userdata_template_file` template and `userdata_template_extra_args` in `worker_groups` (by @snstanton)
+
+### Changed
+
+-  **Breaking:** The `kubectl` configuration file can now be fully-specified using `config_output_path`. Previously it was assumed that `config_output_path` referred to a directory and always ended with a forward slash. This is a breaking change if `config_output_path` does **not** end with a forward slash (which was advised against by the documentation).
+- Changed logic for setting default ebs_optimized to only require maintaining a list of instance types that don't support it (by @jeffmhastings)
+- Bumped minimum terraform version to 0.12.2 to prevent an error on yamlencode function (by @toadjaune)
+- Access conditional resource using join function in combination with splat syntax (by @miguelaferreira)
+
+## [[v6.0.2](https://github.com/terraform-aws-modules/terraform-aws-eks/compare/v6.0.1...v6.0.2)] - 2019-10-07]
+
+### Added
+
+- Added `tags` to `aws_eks_cluster` introduced by terraform-provider-aws 2.31.0 (by @morganchristiansson)
+
+### Changed
+
+ - Add option to enable lifecycle hooks creation (by @barryib)
+ - Remove helm chart value `sslCertPath` described in `docs/autoscaling.md` (by @wi1dcard)
+ - Attaching of IAM policies for autoscaler and CNI to the worker nodes now optional (by @dpiddockcmp)
+
+## [[v6.0.1](https://github.com/terraform-aws-modules/terraform-aws-eks/compare/v6.0.0...v6.0.1)] - 2019-09-25]
+
+### Added
+
+ - Added support for different workers AMI's, i.e. with GPU support (by @rvoitenko)
+
+### Changed
+
+- Use null as default value for `target_group_arns` attribute of worker autoscaling group (by @tatusl)
+- Output empty string when cluster identity is empty (by @tbarry)
+
+## [[v6.0.0](https://github.com/terraform-aws-modules/terraform-aws-eks/compare/v5.1.0...v6.0.0)] - 2019-09-17]
 
  - Added `market_type` to `workers_launch_template.tf` allow the usage of spot nodegroups without mixed instances policy.
  - Added support for log group tag in `./cluster.tf` (@lucas-giaco)
  - Added support for workers iam role tag in `./workers.tf` (@lucas-giaco)
- - Write your awesome addition here (by @you)
  - Added `required_providers` to enforce provider minimum versions (by @dpiddockcmp)
+ - Updated `local.spot_allocation_strategy` docstring to indicate availability of new `capacity-optimized` option. (by @sc250024)
+ - Added support for initial lifecycle hooks for autosacling groups (@barryib)
+ - Added option to recreate ASG when LT or LC changes (by @barryib)
+ - Ability to specify workers role name (by @ivanich)
+ - Added output for OIDC Issuer URL (by @russwhelan)
+ - Added support for Mixed Instance ASG using `worker_groups_launch_template` variable  (by @sppwf)
+ - Changed ASG Tags generation using terraform 12 `for` utility  (by @sppwf)
+ - **Breaking:** Removed `worker_groups_launch_template_mixed` variable (by @sppwf)
 
 ### Changed
 
+ - Update to EKS 1.14 (by @nauxliu)
+ - **Breaking:** Support map users and roles to multiple groups (by @nauxliu)
  - Fixed errors sometimes happening during destroy due to usage of coalesce() in local.tf (by @petrikero)
- - Write your awesome change here (by @you)
-
-# History
+ - Removed historical mention of adding caller's IPv4 to cluster security group (by @dpiddockcmp)
+ - Wrapped `kubelet_extra_args` in double quotes instead of singe quotes (by @nxf5025)
+ - Make terraform plan more consistent and avoid unnecessary "(known after apply)" (by @barryib)
+ - Made sure that `market_type` was correctly passed to `workers_launch_template` (by @to266)
 
 ## [[v5.1.1](https://github.com/terraform-aws-modules/terraform-aws-eks/compare/v5.1.0...v5.1.1)] - 2019-07-30]
 

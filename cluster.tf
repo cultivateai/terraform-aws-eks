@@ -11,6 +11,7 @@ resource "aws_eks_cluster" "this" {
   enabled_cluster_log_types = var.cluster_enabled_log_types
   role_arn                  = local.cluster_iam_role_arn
   version                   = var.cluster_version
+  tags                      = var.tags
 
   vpc_config {
     security_group_ids      = [local.cluster_security_group_id]
@@ -48,7 +49,7 @@ resource "aws_security_group_rule" "cluster_egress_internet" {
   count             = var.cluster_create_security_group ? 1 : 0
   description       = "Allow cluster egress access to the Internet."
   protocol          = "-1"
-  security_group_id = aws_security_group.cluster[0].id
+  security_group_id = local.cluster_security_group_id
   cidr_blocks       = ["0.0.0.0/0"]
   from_port         = 0
   to_port           = 0
@@ -59,7 +60,7 @@ resource "aws_security_group_rule" "cluster_https_worker_ingress" {
   count                    = var.cluster_create_security_group ? 1 : 0
   description              = "Allow pods to communicate with the EKS cluster API."
   protocol                 = "tcp"
-  security_group_id        = aws_security_group.cluster[0].id
+  security_group_id        = local.cluster_security_group_id
   source_security_group_id = local.worker_security_group_id
   from_port                = 443
   to_port                  = 443
@@ -79,11 +80,11 @@ resource "aws_iam_role" "cluster" {
 resource "aws_iam_role_policy_attachment" "cluster_AmazonEKSClusterPolicy" {
   count      = var.manage_cluster_iam_resources ? 1 : 0
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
-  role       = aws_iam_role.cluster[0].name
+  role       = local.cluster_iam_role_name
 }
 
 resource "aws_iam_role_policy_attachment" "cluster_AmazonEKSServicePolicy" {
   count      = var.manage_cluster_iam_resources ? 1 : 0
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSServicePolicy"
-  role       = aws_iam_role.cluster[0].name
+  role       = local.cluster_iam_role_name
 }

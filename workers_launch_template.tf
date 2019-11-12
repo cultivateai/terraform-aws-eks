@@ -2,11 +2,16 @@
 
 resource "aws_autoscaling_group" "workers_launch_template" {
   count = local.worker_group_launch_template_count
-  name_prefix = "${aws_eks_cluster.this.name}-${lookup(
-    var.worker_groups_launch_template[count.index],
-    "name",
-    count.index,
-  )}"
+  name_prefix = join(
+    "-",
+    compact(
+      [
+        aws_eks_cluster.this.name,
+        lookup(var.worker_groups_launch_template[count.index], "name", count.index),
+        lookup(var.worker_groups_launch_template[count.index], "asg_recreate_on_change", local.workers_group_defaults["asg_recreate_on_change"]) ? random_pet.workers_launch_template[count.index].id : ""
+      ]
+    )
+  )
   desired_capacity = lookup(
     var.worker_groups_launch_template[count.index],
     "asg_desired_capacity",
@@ -68,13 +73,94 @@ resource "aws_autoscaling_group" "workers_launch_template" {
     local.workers_group_defaults["termination_policies"]
   )
 
-  launch_template {
-    id = aws_launch_template.workers_launch_template.*.id[count.index]
-    version = lookup(
-      var.worker_groups_launch_template[count.index],
-      "launch_template_version",
-      local.workers_group_defaults["launch_template_version"],
-    )
+  dynamic mixed_instances_policy {
+    iterator = item
+    for_each = (lookup(var.worker_groups_launch_template[count.index], "override_instance_types", null) != null) || (lookup(var.worker_groups_launch_template[count.index], "on_demand_allocation_strategy", null) != null) ? list(var.worker_groups_launch_template[count.index]) : []
+
+    content {
+      instances_distribution {
+        on_demand_allocation_strategy = lookup(
+          item.value,
+          "on_demand_allocation_strategy",
+          "prioritized",
+        )
+        on_demand_base_capacity = lookup(
+          item.value,
+          "on_demand_base_capacity",
+          local.workers_group_defaults["on_demand_base_capacity"],
+        )
+        on_demand_percentage_above_base_capacity = lookup(
+          item.value,
+          "on_demand_percentage_above_base_capacity",
+          local.workers_group_defaults["on_demand_percentage_above_base_capacity"],
+        )
+        spot_allocation_strategy = lookup(
+          item.value,
+          "spot_allocation_strategy",
+          local.workers_group_defaults["spot_allocation_strategy"],
+        )
+        spot_instance_pools = lookup(
+          item.value,
+          "spot_instance_pools",
+          local.workers_group_defaults["spot_instance_pools"],
+        )
+        spot_max_price = lookup(
+          item.value,
+          "spot_max_price",
+          local.workers_group_defaults["spot_max_price"],
+        )
+      }
+
+      launch_template {
+        launch_template_specification {
+          launch_template_id = aws_launch_template.workers_launch_template.*.id[count.index]
+          version = lookup(
+            var.worker_groups_launch_template[count.index],
+            "launch_template_version",
+            local.workers_group_defaults["launch_template_version"],
+          )
+        }
+
+        dynamic "override" {
+          for_each = lookup(
+            var.worker_groups_launch_template[count.index],
+            "override_instance_types",
+            local.workers_group_defaults["override_instance_types"]
+          )
+
+          content {
+            instance_type = override.value
+          }
+        }
+
+      }
+    }
+  }
+  dynamic launch_template {
+    iterator = item
+    for_each = (lookup(var.worker_groups_launch_template[count.index], "override_instance_types", null) != null) || (lookup(var.worker_groups_launch_template[count.index], "on_demand_allocation_strategy", null) != null) ? [] : list(var.worker_groups_launch_template[count.index])
+
+    content {
+      id = aws_launch_template.workers_launch_template.*.id[count.index]
+      version = lookup(
+        var.worker_groups_launch_template[count.index],
+        "launch_template_version",
+        local.workers_group_defaults["launch_template_version"],
+      )
+    }
+  }
+
+  dynamic "initial_lifecycle_hook" {
+    for_each = var.worker_create_initial_lifecycle_hooks ? lookup(var.worker_groups_launch_template[count.index], "asg_initial_lifecycle_hooks", local.workers_group_defaults["asg_initial_lifecycle_hooks"]) : []
+    content {
+      name                    = initial_lifecycle_hook.value["name"]
+      lifecycle_transition    = initial_lifecycle_hook.value["lifecycle_transition"]
+      notification_metadata   = lookup(initial_lifecycle_hook.value, "notification_metadata", null)
+      heartbeat_timeout       = lookup(initial_lifecycle_hook.value, "heartbeat_timeout", null)
+      notification_target_arn = lookup(initial_lifecycle_hook.value, "notification_target_arn", null)
+      role_arn                = lookup(initial_lifecycle_hook.value, "role_arn", null)
+      default_result          = lookup(initial_lifecycle_hook.value, "default_result", null)
+    }
   }
 
   tags = concat(
@@ -168,7 +254,7 @@ resource "aws_launch_template" "workers_launch_template" {
     )[count.index]
   }
 
-  image_id      = "${lookup(var.worker_groups_launch_template[count.index], "ami_id", var.workers_ami)}"
+  image_id = "${lookup(var.worker_groups_launch_template[count.index], "ami_id", var.workers_ami)}"
   instance_type = lookup(
     var.worker_groups_launch_template[count.index],
     "instance_type",
@@ -182,18 +268,18 @@ resource "aws_launch_template" "workers_launch_template" {
   user_data = base64encode(
     data.template_file.launch_template_userdata.*.rendered[count.index],
   )
+
   ebs_optimized = lookup(
     var.worker_groups_launch_template[count.index],
     "ebs_optimized",
-    lookup(
-      local.ebs_optimized,
+    ! contains(
+      local.ebs_optimized_not_supported,
       lookup(
         var.worker_groups_launch_template[count.index],
         "instance_type",
         local.workers_group_defaults["instance_type"],
-      ),
-      false,
-    ),
+      )
+    )
   )
 
   credit_specification {
@@ -226,10 +312,9 @@ resource "aws_launch_template" "workers_launch_template" {
   }
 
   dynamic instance_market_options {
-    iterator = item
     for_each = lookup(var.worker_groups_launch_template[count.index], "market_type", null) == null ? [] : list(lookup(var.worker_groups_launch_template[count.index], "market_type", null))
     content {
-      market_type = item.value
+      market_type = instance_market_options.value
     }
   }
 
@@ -292,13 +377,32 @@ resource "aws_launch_template" "workers_launch_template" {
   }
 }
 
+resource "random_pet" "workers_launch_template" {
+  count = local.worker_group_launch_template_count
+
+  separator = "-"
+  length    = 2
+
+  keepers = {
+    lt_name = join(
+      "-",
+      compact(
+        [
+          aws_launch_template.workers_launch_template[count.index].name,
+          aws_launch_template.workers_launch_template[count.index].latest_version
+        ]
+      )
+    )
+  }
+}
+
 resource "aws_iam_instance_profile" "workers_launch_template" {
   count       = var.manage_worker_iam_resources ? local.worker_group_launch_template_count : 0
   name_prefix = aws_eks_cluster.this.name
   role = lookup(
     var.worker_groups_launch_template[count.index],
     "iam_role_id",
-    local.workers_group_defaults["iam_role_id"],
+    local.default_iam_role_id,
   )
   path = var.iam_path
 }
