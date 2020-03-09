@@ -22,6 +22,7 @@ locals {
   default_ami_id_linux   = data.aws_ami.eks_worker.id
   default_ami_id_windows = data.aws_ami.eks_worker_windows.id
 
+  policy_arn_prefix = contains(["cn-northwest-1", "cn-north-1"], data.aws_region.current.name) ? "arn:aws-cn:iam::aws:policy" : "arn:aws:iam::aws:policy"
   workers_group_defaults_defaults = {
     name                          = "count.index"               # Name of the worker group. Literal count.index will never be used but if name is not set, the count.index interpolation will be used.
     tags                          = []                          # A list of map defining extra tags to be applied to the worker group autoscaling group.
@@ -49,7 +50,6 @@ locals {
     public_ip                     = false                       # Associate a public ip address with a worker
     kubelet_extra_args            = ""                          # This string is passed directly to kubelet if set. Useful for adding labels or taints.
     subnets                       = var.subnets                 # A list of subnets to place the worker nodes in. i.e. ["subnet-123", "subnet-456", "subnet-789"]
-    autoscaling_enabled           = false                       # Sets whether policy and matching tags will be added to allow autoscaling.
     additional_security_group_ids = []                          # A list of additional security group ids to include in worker launch config
     protect_from_scale_in         = false                       # Prevent AWS from scaling in, so that cluster-autoscaler is solely responsible.
     iam_instance_profile_name     = ""                          # A custom IAM instance profile name. Used when manage_worker_iam_resources is set to false. Incompatible with iam_role_id.

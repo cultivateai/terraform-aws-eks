@@ -1,12 +1,12 @@
 # Worker Groups using Launch Templates
 
 resource "aws_autoscaling_group" "workers_launch_template" {
-  count = local.worker_group_launch_template_count
+  count = var.create_eks ? local.worker_group_launch_template_count : 0
   name_prefix = join(
     "-",
     compact(
       [
-        aws_eks_cluster.this.name,
+        aws_eks_cluster.this[0].name,
         lookup(var.worker_groups_launch_template[count.index], "name", count.index),
         lookup(var.worker_groups_launch_template[count.index], "asg_recreate_on_change", local.workers_group_defaults["asg_recreate_on_change"]) ? random_pet.workers_launch_template[count.index].id : ""
       ]
@@ -167,7 +167,7 @@ resource "aws_autoscaling_group" "workers_launch_template" {
     [
       {
         "key" = "Name"
-        "value" = "${aws_eks_cluster.this.name}-${lookup(
+        "value" = "${aws_eks_cluster.this[0].name}-${lookup(
           var.worker_groups_launch_template[count.index],
           "name",
           count.index,
@@ -175,32 +175,9 @@ resource "aws_autoscaling_group" "workers_launch_template" {
         "propagate_at_launch" = true
       },
       {
-        "key"                 = "kubernetes.io/cluster/${aws_eks_cluster.this.name}"
+        "key"                 = "kubernetes.io/cluster/${aws_eks_cluster.this[0].name}"
         "value"               = "owned"
         "propagate_at_launch" = true
-      },
-      {
-        "key" = "k8s.io/cluster-autoscaler/${lookup(
-          var.worker_groups_launch_template[count.index],
-          "autoscaling_enabled",
-          local.workers_group_defaults["autoscaling_enabled"],
-        ) ? "enabled" : "disabled"}"
-        "value"               = "true"
-        "propagate_at_launch" = false
-      },
-      {
-        "key"                 = "k8s.io/cluster-autoscaler/${aws_eks_cluster.this.name}"
-        "value"               = aws_eks_cluster.this.name
-        "propagate_at_launch" = false
-      },
-      {
-        "key" = "k8s.io/cluster-autoscaler/node-template/resources/ephemeral-storage"
-        "value" = "${lookup(
-          var.worker_groups_launch_template[count.index],
-          "root_volume_size",
-          local.workers_group_defaults["root_volume_size"],
-        )}Gi"
-        "propagate_at_launch" = false
       },
     ],
     local.asg_tags,
@@ -218,8 +195,8 @@ resource "aws_autoscaling_group" "workers_launch_template" {
 }
 
 resource "aws_launch_template" "workers_launch_template" {
-  count = local.worker_group_launch_template_count
-  name_prefix = "${aws_eks_cluster.this.name}-${lookup(
+  count = var.create_eks ? (local.worker_group_launch_template_count) : 0
+  name_prefix = "${aws_eks_cluster.this[0].name}-${lookup(
     var.worker_groups_launch_template[count.index],
     "name",
     count.index,
@@ -360,7 +337,7 @@ resource "aws_launch_template" "workers_launch_template" {
 
     tags = merge(
       {
-        "Name" = "${aws_eks_cluster.this.name}-${lookup(
+        "Name" = "${aws_eks_cluster.this[0].name}-${lookup(
           var.worker_groups_launch_template[count.index],
           "name",
           count.index,
@@ -378,7 +355,7 @@ resource "aws_launch_template" "workers_launch_template" {
 }
 
 resource "random_pet" "workers_launch_template" {
-  count = local.worker_group_launch_template_count
+  count = var.create_eks ? local.worker_group_launch_template_count : 0
 
   separator = "-"
   length    = 2
@@ -397,8 +374,8 @@ resource "random_pet" "workers_launch_template" {
 }
 
 resource "aws_iam_instance_profile" "workers_launch_template" {
-  count       = var.manage_worker_iam_resources ? local.worker_group_launch_template_count : 0
-  name_prefix = aws_eks_cluster.this.name
+  count       = var.manage_worker_iam_resources && var.create_eks ? local.worker_group_launch_template_count : 0
+  name_prefix = aws_eks_cluster.this[0].name
   role = lookup(
     var.worker_groups_launch_template[count.index],
     "iam_role_id",

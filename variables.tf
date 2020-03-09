@@ -20,7 +20,7 @@ variable "cluster_name" {
 }
 
 variable "cluster_security_group_id" {
-  description = "If provided, the EKS cluster will be attached to this security group. If not given, a security group will be created with necessary ingres/egress to work with the workers"
+  description = "If provided, the EKS cluster will be attached to this security group. If not given, a security group will be created with necessary ingress/egress to work with the workers"
   type        = string
   default     = ""
 }
@@ -45,12 +45,6 @@ variable "write_kubeconfig" {
 
 variable "manage_aws_auth" {
   description = "Whether to apply the aws-auth configmap file."
-  default     = true
-}
-
-variable "write_aws_auth_config" {
-  description = "Whether to write the aws-auth configmap file."
-  type        = bool
   default     = true
 }
 
@@ -119,7 +113,7 @@ variable "worker_groups_launch_template" {
 }
 
 variable "worker_security_group_id" {
-  description = "If provided, all workers will be attached to this security group. If not given, a security group will be created with necessary ingres/egress to work with the EKS cluster."
+  description = "If provided, all workers will be attached to this security group. If not given, a security group will be created with necessary ingress/egress to work with the EKS cluster."
   type        = string
   default     = ""
 }
@@ -199,7 +193,7 @@ variable "kubeconfig_name" {
 variable "cluster_create_timeout" {
   description = "Timeout value when creating the EKS cluster."
   type        = string
-  default     = "15m"
+  default     = "30m"
 }
 
 variable "cluster_delete_timeout" {
@@ -208,10 +202,10 @@ variable "cluster_delete_timeout" {
   default     = "15m"
 }
 
-variable "local_exec_interpreter" {
-  description = "Command to run for local-exec resources. Must be a shell-style interpreter. If you are on Windows Git Bash is a good choice."
-  type        = list(string)
-  default     = ["/bin/sh", "-c"]
+variable "wait_for_cluster_cmd" {
+  description = "Custom local-exec command to execute for determining if the eks cluster is healthy. Cluster endpoint will be available as an environment variable called ENDPOINT"
+  type        = string
+  default     = "until wget --no-check-certificate -O - -q $ENDPOINT/healthz >/dev/null; do sleep 4; done"
 }
 
 variable "cluster_create_security_group" {
@@ -256,6 +250,12 @@ variable "cluster_endpoint_public_access" {
   default     = true
 }
 
+variable "cluster_endpoint_public_access_cidrs" {
+  description = "List of CIDR blocks which can access the Amazon EKS public API server endpoint."
+  type        = list(string)
+  default     = ["0.0.0.0/0"]
+}
+
 variable "manage_cluster_iam_resources" {
   description = "Whether to let the module manage cluster IAM resources. If set to false, cluster_iam_role_name must be specified."
   type        = bool
@@ -280,20 +280,38 @@ variable "workers_role_name" {
   default     = ""
 }
 
-variable "manage_worker_autoscaling_policy" {
-  description = "Whether to let the module manage the cluster autoscaling iam policy."
-  type        = bool
-  default     = true
-}
-
-variable "attach_worker_autoscaling_policy" {
-  description = "Whether to attach the module managed cluster autoscaling iam policy to the default worker IAM role. This requires `manage_worker_autoscaling_policy = true`"
-  type        = bool
-  default     = true
-}
-
 variable "attach_worker_cni_policy" {
   description = "Whether to attach the Amazon managed `AmazonEKS_CNI_Policy` IAM policy to the default worker IAM role. WARNING: If set `false` the permissions must be assigned to the `aws-node` DaemonSet pods via another method or nodes will not be able to join the cluster."
   type        = bool
   default     = true
+}
+
+variable "create_eks" {
+  description = "Controls if EKS resources should be created (it affects almost all resources)"
+  type        = bool
+  default     = true
+}
+
+variable "node_groups_defaults" {
+  description = "Map of values to be applied to all node groups. See `node_groups` module's documentaton for more details"
+  type        = any
+  default     = {}
+}
+
+variable "node_groups" {
+  description = "Map of map of node groups to create. See `node_groups` module's documentation for more details"
+  type        = any
+  default     = {}
+}
+
+variable "enable_irsa" {
+  description = "Whether to create OpenID Connect Provider for EKS to enable IRSA"
+  type        = bool
+  default     = false
+}
+
+variable "eks_oidc_root_ca_thumbprint" {
+  type        = string
+  description = "Thumbprint of Root CA for EKS OIDC, Valid until 2037"
+  default     = "9e99a48a9960b14926bb7f3b02e22da2b0ab7280"
 }
