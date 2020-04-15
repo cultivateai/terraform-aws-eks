@@ -73,6 +73,21 @@ resource "aws_autoscaling_group" "workers" {
     "termination_policies",
     local.workers_group_defaults["termination_policies"]
   )
+  max_instance_lifetime = lookup(
+    var.worker_groups[count.index],
+    "max_instance_lifetime",
+    local.workers_group_defaults["max_instance_lifetime"],
+  )
+  default_cooldown = lookup(
+    var.worker_groups[count.index],
+    "default_cooldown",
+    local.workers_group_defaults["default_cooldown"]
+  )
+  health_check_grace_period = lookup(
+    var.worker_groups[count.index],
+    "health_check_grace_period",
+    local.workers_group_defaults["health_check_grace_period"]
+  )
 
   dynamic "initial_lifecycle_hook" {
     for_each = var.worker_create_initial_lifecycle_hooks ? lookup(var.worker_groups[count.index], "asg_initial_lifecycle_hooks", local.workers_group_defaults["asg_initial_lifecycle_hooks"]) : []
@@ -202,6 +217,36 @@ resource "aws_launch_configuration" "workers" {
       local.workers_group_defaults["root_iops"],
     )
     delete_on_termination = true
+  }
+
+  dynamic "ebs_block_device" {
+    for_each = lookup(var.worker_groups[count.index], "additional_ebs_volumes", local.workers_group_defaults["additional_ebs_volumes"])
+
+    content {
+      device_name = ebs_block_device.value.block_device_name
+      volume_size = lookup(
+        ebs_block_device.value,
+        "volume_size",
+        local.workers_group_defaults["root_volume_size"],
+      )
+      volume_type = lookup(
+        ebs_block_device.value,
+        "volume_type",
+        local.workers_group_defaults["root_volume_type"],
+      )
+      iops = lookup(
+        ebs_block_device.value,
+        "iops",
+        local.workers_group_defaults["root_iops"],
+      )
+      encrypted = lookup(
+        ebs_block_device.value,
+        "encrypted",
+        local.workers_group_defaults["root_encrypted"],
+      )
+      delete_on_termination = lookup(ebs_block_device.value, "delete_on_termination", true)
+    }
+
   }
 
   lifecycle {
