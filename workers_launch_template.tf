@@ -246,7 +246,7 @@ resource "aws_launch_template" "workers_launch_template" {
     )[count.index]
   }
 
-  image_id = "${lookup(var.worker_groups_launch_template[count.index], "ami_id", var.workers_ami)}"
+  image_id = lookup(var.worker_groups_launch_template[count.index], "ami_id", var.workers_ami)
   instance_type = lookup(
     var.worker_groups_launch_template[count.index],
     "instance_type",
