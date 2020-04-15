@@ -97,7 +97,7 @@ variable "worker_groups" {
 }
 
 variable "workers_ami" {
-  type = "string"
+  type = string
 }
 
 variable "workers_group_defaults" {

@@ -137,7 +137,7 @@ resource "aws_autoscaling_group" "workers" {
 resource "aws_launch_configuration" "workers" {
   count       = var.create_eks ? local.worker_group_count : 0
   name_prefix = "${aws_eks_cluster.this[0].name}-${lookup(var.worker_groups[count.index], "name", count.index)}"
-  image_id    = "${lookup(var.worker_groups[count.index], "ami_id", var.workers_ami)}"
+  image_id    = lookup(var.worker_groups[count.index], "ami_id", var.workers_ami)
   associate_public_ip_address = lookup(
     var.worker_groups[count.index],
     "public_ip",
